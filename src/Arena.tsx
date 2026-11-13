@@ -8,7 +8,8 @@ import * as THREE from 'three';
 import {RoomEnvironment} from 'three/examples/jsm/environments/RoomEnvironment.js';
 import tributes from './tributes.json';
 import {Colosseum, Crowd} from './arena/Colosseum';
-import {Brazier, Gladiator} from './arena/Gladiator';
+import {Brazier} from './arena/Gladiator';
+import {GladiatorAuto} from './arena/GladiatorModel';
 import {rng} from './arena/util';
 
 export type ArenaProps = {
@@ -124,7 +125,7 @@ export const Arena: React.FC<ArenaProps> = ({title, episode, eliminated}) => {
         <Crowd frame={frame} />
         <Brazier frame={frame} />
         {tributes.map((t, i) => (
-          <Gladiator
+          <GladiatorAuto
             key={t.name}
             index={i}
             total={tributes.length}
