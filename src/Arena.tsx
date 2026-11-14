@@ -9,7 +9,7 @@ import {RoomEnvironment} from 'three/examples/jsm/environments/RoomEnvironment.j
 import tributes from './tributes.json';
 import {Colosseum, Crowd} from './arena/Colosseum';
 import {Brazier} from './arena/Gladiator';
-import {GladiatorAuto} from './arena/GladiatorModel';
+import {GladiatorAuto, useGladiatorModel} from './arena/GladiatorModel';
 import {rng} from './arena/util';
 
 export type ArenaProps = {
@@ -85,6 +85,7 @@ export const Arena: React.FC<ArenaProps> = ({title, episode, eliminated}) => {
   const frame = useCurrentFrame();
   const {fps, durationInFrames, width, height} = useVideoConfig();
 
+  const {gltf, ready} = useGladiatorModel();
   const titleIn = spring({frame: frame - 8, fps, config: {damping: 18}});
   const fadeIn = interpolate(frame, [0, 18], [1, 0], {extrapolateRight: 'clamp'});
   const fadeOut = interpolate(frame, [durationInFrames - 15, durationInFrames], [0, 1], {extrapolateLeft: 'clamp'});
@@ -93,6 +94,7 @@ export const Arena: React.FC<ArenaProps> = ({title, episode, eliminated}) => {
 
   return (
     <AbsoluteFill style={{background: '#000'}}>
+      {ready && (
       <ThreeCanvas
         width={width}
         height={height}
@@ -126,6 +128,7 @@ export const Arena: React.FC<ArenaProps> = ({title, episode, eliminated}) => {
         <Brazier frame={frame} />
         {tributes.map((t, i) => (
           <GladiatorAuto
+            gltf={gltf}
             key={t.name}
             index={i}
             total={tributes.length}
@@ -146,6 +149,7 @@ export const Arena: React.FC<ArenaProps> = ({title, episode, eliminated}) => {
           <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
         </EffectComposer>
       </ThreeCanvas>
+      )}
 
       <AbsoluteFill
         style={{

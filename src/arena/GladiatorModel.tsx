@@ -31,23 +31,25 @@ type Props = {
   rise: number;
 };
 
-export const GladiatorAuto: React.FC<Props> = (props) => {
-  const [state, setState] = useState<'loading' | 'model' | 'fallback'>('loading');
+/** Carga el modelo antes de montar la escena 3D. ready=false mientras carga. */
+export const useGladiatorModel = () => {
   const [gltf, setGltf] = useState<GLTF | null>(null);
+  const [ready, setReady] = useState(false);
   const [handle] = useState(() => delayRender('Cargando modelo de gladiador'));
-
   useEffect(() => {
     loadModel()
       .then((g) => {
         setGltf(g);
-        setState(g ? 'model' : 'fallback');
+        setReady(true);
         continueRender(handle);
       })
       .catch((e) => cancelRender(e));
   }, [handle]);
+  return {gltf, ready};
+};
 
-  if (state === 'loading') return null;
-  if (state === 'fallback' || !gltf) return <Gladiator {...props} />;
+export const GladiatorAuto: React.FC<Props & {gltf: GLTF | null}> = ({gltf, ...props}) => {
+  if (!gltf) return <Gladiator {...props} />;
   return <ModelGladiator {...props} gltf={gltf} />;
 };
 
@@ -60,8 +62,12 @@ const ModelGladiator: React.FC<Props & {gltf: GLTF}> = ({
 
   const {root, mixer, scale} = useMemo(() => {
     const root = cloneSkinned(gltf.scene) as THREE.Object3D;
-    const box = new THREE.Box3().setFromObject(root);
-    const scale = 1.85 / Math.max(0.01, box.max.y - box.min.y);
+    root.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(root, true);
+    const size = box.max.y - box.min.y;
+    const scale = size > 0 && Number.isFinite(size) ? 1.85 / size : 1;
+    // apoyar los pies en el suelo
+    root.position.y = -box.min.y;
     root.traverse((o) => {
       const m = o as THREE.Mesh;
       if (m.isMesh) {
@@ -83,7 +89,7 @@ const ModelGladiator: React.FC<Props & {gltf: GLTF}> = ({
   return (
     <group position={[Math.cos(th) * radius, -2.4 * (1 - rise), Math.sin(th) * radius]} rotation={[0, face, 0]}>
       <group rotation={[-ease * (Math.PI / 2 - 0.1), 0, 0]} position={[0, 0, ease * 0.25]}>
-        <primitive object={root} scale={scale} />
+        <group scale={scale} rotation={[0, Math.PI / 2, 0]}><primitive object={root} /></group>
       </group>
       <sprite position={[0, 2.42, 0]} scale={[1.15, 0.29, 1]}>
         <spriteMaterial map={plate} transparent opacity={1 - ease * 0.7} depthTest={false} />
