@@ -2,7 +2,7 @@ import {useLayoutEffect, useMemo} from 'react';
 import {AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig} from 'remotion';
 import {ThreeCanvas} from '@remotion/three';
 import {useThree} from '@react-three/fiber';
-import {Bloom, EffectComposer, ToneMapping, Vignette} from '@react-three/postprocessing';
+import {Bloom, EffectComposer, SMAA, ToneMapping, Vignette} from '@react-three/postprocessing';
 import {ToneMappingMode} from 'postprocessing';
 import * as THREE from 'three';
 import {RoomEnvironment} from 'three/examples/jsm/environments/RoomEnvironment.js';
@@ -56,26 +56,36 @@ const Dust: React.FC<{frame: number}> = ({frame}) => {
   );
 };
 
+/** Estado de cámara por fotograma; `focus` es el ángulo del anillo al que mira (para recortar lo que no se ve). */
+export const cameraState = (frame: number, target: number) => {
+  const ringPos = (th: number, y: number) => new THREE.Vector3(Math.cos(th) * RING, y, Math.sin(th) * RING);
+  const n = tributes.length;
+  if (frame < 150) {
+    const u = frame / 150;
+    const ang = 0.4 + u * 1.5;
+    return {
+      pos: new THREE.Vector3(Math.cos(ang) * 1.3, 1.6 + u * 0.4, Math.sin(ang) * 1.3),
+      look: ringPos(ang + 0.15, 1.9 + u * 0.3),
+      focus: ang + 0.15,
+    };
+  }
+  const u = (frame - 150) / 150;
+  const th = (target / n) * Math.PI * 2;
+  const ang = th + 0.5 - u * 0.25;
+  const r = 1.6 + u * 0.8;
+  return {
+    pos: new THREE.Vector3(Math.cos(ang) * r, 1.6 + u * 0.4, Math.sin(ang) * r),
+    look: ringPos(th, 1.35),
+    focus: th,
+  };
+};
+
 const CameraRig: React.FC<{frame: number; target: number}> = ({frame, target}) => {
   const camera = useThree((s) => s.camera);
   useLayoutEffect(() => {
-    const ringPos = (th: number, y: number) => new THREE.Vector3(Math.cos(th) * RING, y, Math.sin(th) * RING);
-    const n = tributes.length;
-    if (frame < 150) {
-      // plano A: desde el centro, mirando a las caras con la grada detrás
-      const u = frame / 150;
-      const ang = 0.4 + u * 1.5;
-      camera.position.set(Math.cos(ang) * 1.3, 1.6 + u * 0.4, Math.sin(ang) * 1.3);
-      camera.lookAt(ringPos(ang + 0.15, 1.9 + u * 0.3));
-    } else {
-      // plano B: acercamiento al tributo que cae
-      const u = (frame - 150) / 150;
-      const th = (target / n) * Math.PI * 2;
-      const ang = th + 0.5 - u * 0.25;
-      const r = 1.6 + u * 0.8;
-      camera.position.set(Math.cos(ang) * r, 1.6 + u * 0.4, Math.sin(ang) * r);
-      camera.lookAt(ringPos(th, 1.35));
-    }
+    const st = cameraState(frame, target);
+    camera.position.copy(st.pos);
+    camera.lookAt(st.look);
     camera.updateMatrixWorld();
   }, [camera, frame, target]);
   return null;
@@ -138,15 +148,17 @@ export const Arena: React.FC<ArenaProps> = ({title, episode, eliminated}) => {
             frame={frame}
             fps={fps}
             radius={RING}
+            focus={cameraState(frame, Math.max(0, tributes.findIndex((t) => t.name === eliminated))).focus}
             rise={spring({frame: frame - 6 - i * 2, fps, config: {damping: 22, stiffness: 60}})}
           />
         ))}
         <Dust frame={frame} />
 
-        <EffectComposer>
+        <EffectComposer multisampling={0}>
           <Bloom intensity={0.7} luminanceThreshold={0.9} luminanceSmoothing={0.2} mipmapBlur />
           <Vignette eskil={false} offset={0.2} darkness={0.7} />
           <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+          <SMAA />
         </EffectComposer>
       </ThreeCanvas>
       )}

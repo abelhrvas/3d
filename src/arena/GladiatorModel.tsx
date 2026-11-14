@@ -29,6 +29,7 @@ type Props = {
   fps: number;
   radius: number;
   rise: number;
+  focus: number; // ángulo del anillo al que mira la cámara
 };
 
 /** Carga el modelo antes de montar la escena 3D. ready=false mientras carga. */
@@ -54,11 +55,15 @@ export const GladiatorAuto: React.FC<Props & {gltf: GLTF | null}> = ({gltf, ...p
 };
 
 const ModelGladiator: React.FC<Props & {gltf: GLTF}> = ({
-  gltf, index, total, name, color, eliminated, frame, fps, radius, rise,
+  gltf, index, total, name, color, eliminated, frame, fps, radius, rise, focus,
 }) => {
   const th = (index / total) * Math.PI * 2;
   const face = Math.atan2(-Math.cos(th), -Math.sin(th));
   const plate = useMemo(() => makePlate(name, color), [name, color]);
+  // distancia angular a lo que mira la cámara: lo que queda lejos ni se pinta ni proyecta sombra
+  const d = Math.abs(Math.atan2(Math.sin(th - focus), Math.cos(th - focus)));
+  const onScreen = d < 0.75 || (eliminated && frame >= 150);
+  const castsShadow = d < 1.4 || eliminated;
 
   const {root, mixer, scale} = useMemo(() => {
     const root = cloneSkinned(gltf.scene) as THREE.Object3D;
@@ -85,14 +90,21 @@ const ModelGladiator: React.FC<Props & {gltf: GLTF}> = ({
     return {root, mixer, scale};
   }, [gltf]);
 
+  useEffect(() => {
+    root.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (m.isMesh) m.castShadow = castsShadow;
+    });
+  }, [root, castsShadow]);
+
   // la animación sigue el fotograma, no el reloj, para que el render sea determinista
-  mixer?.setTime((((frame + index * 5) / fps) % 4.16) || 0);
+  if (castsShadow) mixer?.setTime((((frame + index * 5) / fps) % 4.16) || 0);
 
   const fall = eliminated ? Math.min(1, Math.max(0, (frame - 205) / 22)) : 0;
   const ease = 1 - Math.pow(1 - fall, 3);
 
   return (
-    <group position={[Math.cos(th) * radius, -2.4 * (1 - rise), Math.sin(th) * radius]} rotation={[0, face, 0]}>
+    <group visible={onScreen || castsShadow} position={[Math.cos(th) * radius, -2.4 * (1 - rise), Math.sin(th) * radius]} rotation={[0, face, 0]}>
       <group rotation={[-ease * (Math.PI / 2 - 0.1), 0, 0]} position={[0, 0, ease * 0.25]}>
         <group scale={scale} rotation={[0, -Math.PI / 2 + 0.55, 0]}><primitive object={root} /></group>
       </group>

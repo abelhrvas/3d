@@ -5,7 +5,9 @@
   "scripts": {
     "studio": "remotion studio src/index.ts",
     "render": "remotion render src/index.ts HelloWorld out/hello.mp4",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "render:reel": "remotion render src/index.ts Arena out/reel.mp4 --gl=angle --concurrency=50% --crf=16",
+    "render:test": "remotion render src/index.ts Arena out/test3s.mp4 --frames=0-89 --gl=angle --concurrency=50% --crf=16"
   },
   "repository": {
     "type": "git",

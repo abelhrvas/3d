@@ -206,11 +206,11 @@ export const Crowd: React.FC<{frame: number}> = ({frame}) => {
 
   return (
     <>
-      <instancedMesh ref={bodies} args={[undefined, undefined, people.length]} castShadow>
+      <instancedMesh ref={bodies} args={[undefined, undefined, people.length]}>
         <capsuleGeometry args={[0.17, 0.36, 2, 6]} />
         <meshStandardMaterial roughness={0.9} />
       </instancedMesh>
-      <instancedMesh ref={heads} args={[undefined, undefined, people.length]} castShadow>
+      <instancedMesh ref={heads} args={[undefined, undefined, people.length]}>
         <sphereGeometry args={[0.12, 8, 6]} />
         <meshStandardMaterial roughness={0.7} />
       </instancedMesh>
