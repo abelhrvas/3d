@@ -93,28 +93,8 @@ const ModelGladiator: React.FC<Props & {gltf: GLTF}> = ({
 
   return (
     <group position={[Math.cos(th) * radius, -2.4 * (1 - rise), Math.sin(th) * radius]} rotation={[0, face, 0]}>
-      {/* aro de color en el suelo para distinguir al tributo */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
-        <ringGeometry args={[0.62, 0.8, 32]} />
-        <meshBasicMaterial color={color} />
-      </mesh>
       <group rotation={[-ease * (Math.PI / 2 - 0.1), 0, 0]} position={[0, 0, ease * 0.25]}>
         <group scale={scale} rotation={[0, -Math.PI / 2 + 0.55, 0]}><primitive object={root} /></group>
-        {/* capa */}
-        <mesh position={[0, 1.2, -0.2]} rotation={[0.07, 0, 0]} castShadow>
-          <boxGeometry args={[0.5, 1.05, 0.02]} />
-          <meshStandardMaterial color={color} roughness={0.9} side={THREE.DoubleSide} />
-        </mesh>
-        {/* banda cruzada en el pecho */}
-        <mesh position={[0, 1.27, 0.01]} rotation={[Math.PI / 2 - 0.15, 0.7, 0]}>
-          <torusGeometry args={[0.2, 0.03, 8, 24]} />
-          <meshStandardMaterial color={color} roughness={0.8} />
-        </mesh>
-        {/* penacho del casco */}
-        <mesh position={[0, 1.86, -0.03]} castShadow>
-          <boxGeometry args={[0.04, 0.16, 0.34]} />
-          <meshStandardMaterial color={color} roughness={0.9} />
-        </mesh>
       </group>
       <sprite position={[0, 2.42, 0]} scale={[1.15, 0.29, 1]}>
         <spriteMaterial map={plate} transparent opacity={1 - ease * 0.7} depthTest={false} />
