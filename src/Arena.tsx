@@ -65,7 +65,7 @@ const CameraRig: React.FC<{frame: number; target: number}> = ({frame, target}) =
       // plano A: desde el centro, mirando a las caras con la grada detrás
       const u = frame / 150;
       const ang = 0.4 + u * 1.5;
-      camera.position.set(Math.cos(ang) * 0.4, 1.6 + u * 0.4, Math.sin(ang) * 0.4);
+      camera.position.set(Math.cos(ang) * 1.3, 1.6 + u * 0.4, Math.sin(ang) * 1.3);
       camera.lookAt(ringPos(ang + 0.15, 1.9 + u * 0.3));
     } else {
       // plano B: acercamiento al tributo que cae
